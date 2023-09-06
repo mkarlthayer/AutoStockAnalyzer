@@ -8,22 +8,58 @@ date: "2023-08-31"
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+```{r echo=FALSE}
+# load library
+library(rvest)
+library(ggplot2)
+library(FinCal)
+stock = "CVS"
 ```
 
-## Including Plots
+```{r echo=FALSE}
+stock = "CVS"
+```
 
-You can also embed plots, for example:
+```{r echo=FALSE}
+# Custom Functions
+convert <- function(x) {
+  x <- gsub('[(]',"-",x)
+  x <- gsub('[)]',"",x)
+  if (grepl("B", x)) {
+    x <- gsub('[B]',"",x) 
+    x <- as.double(x)
+    x*1000
+  } else if (grepl("M", x)) {
+    x <- gsub('[M]',"",x)
+    x <- as.double(x) 
+    x*1
+  } else if (grepl("-", x)) {
+    x <- gsub('-',"0",x)
+    x <- as.double(x)
+  }
+}
+```
+
+```{r echo=FALSE}
+# Scrape Financial data
+income_statement <- paste0('https://www.marketwatch.com/investing/stock/',stock,'/financials')
+income_statement_page <- income_statement %>% read_html()
+income_names <- income_statement_page %>% html_nodes(".overflow__cell .fixed--cell") %>% html_text()
+income_nums <- income_statement_page %>% html_nodes(".cell__content span") %>% html_text()
+x<-1
+while (income_names[x] != "Sales/Revenue") {x<-x+1}
+Revenue <- income_nums[(5*(x-1)+1):(5*x)]
+for(i in 1:5){
+  Revenue[i] <- convert(Revenue[i])
+}
+```
+
+
+## Stock Analysis of `r stock`
+
+## Plots
 
 ```{r pressure, echo=FALSE}
-plot(pressure)
+plot(Revenue)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
