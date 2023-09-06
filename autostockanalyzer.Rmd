@@ -1,6 +1,9 @@
 ---
 title: "AutoStockAnalyzer"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
+  word_document: default
 date: "2023-08-31"
 ---
 
