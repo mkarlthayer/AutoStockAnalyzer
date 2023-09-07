@@ -16,7 +16,6 @@ knitr::opts_chunk$set(echo = TRUE)
 library(rvest)
 library(ggplot2)
 library(FinCal)
-stock = "CVS"
 ```
 
 ```{r echo=FALSE}
@@ -47,14 +46,53 @@ convert <- function(x) {
 # Scrape Financial data
 income_statement <- paste0('https://www.marketwatch.com/investing/stock/',stock,'/financials')
 income_statement_page <- income_statement %>% read_html()
+balance_sheet <- paste0('https://www.marketwatch.com/investing/stock/',stock,'/financials/balance-sheet')
+balance_sheet_page <- balance_sheet %>% read_html()
+cash_flow <- paste0('https://www.marketwatch.com/investing/stock/',stock,'/financials/cash-flow')
+cash_flow_page <- cash_flow %>% read_html()
+more_stats <- paste0("https://finviz.com/quote.ashx?t=",stock)
+more_stats_page <- more_stats %>% read_html()
+
 income_names <- income_statement_page %>% html_nodes(".overflow__cell .fixed--cell") %>% html_text()
 income_nums <- income_statement_page %>% html_nodes(".cell__content span") %>% html_text()
+balance_names <- balance_sheet_page %>% html_nodes(".overflow__cell .fixed--cell") %>% html_text()
+balance_nums <- balance_sheet_page %>% html_nodes(".cell__content span") %>% html_text()
+cash_names <- cash_flow_page %>% html_nodes(".overflow__cell .fixed--cell") %>% html_text()
+cash_nums <- cash_flow_page %>% html_nodes(".cell__content span") %>% html_text()
+stats_names <- more_stats_page %>% html_nodes(".snapshot-td2-cp") %>% html_text()
+stats_nums <- more_stats_page %>% html_nodes(".snapshot-td2 b") %>% html_text()
+
 x<-1
 while (income_names[x] != "Sales/Revenue") {x<-x+1}
 Revenue <- income_nums[(5*(x-1)+1):(5*x)]
 for(i in 1:5){
   Revenue[i] <- convert(Revenue[i])
 }
+x<-1
+while (balance_names[x] != "Total Equity") {x<-x+1}
+Equity <- balance_nums[(5*(x-1)+1):(5*x)]
+for(i in 1:5){
+  Equity[i] <- convert(Equity[i])
+}
+Equity <- as.numeric(Equity)
+x<-1
+while (balance_names[x] != "Long-Term Debt") {x<-x+1}
+Debt <- balance_nums[(5*(x-1)+1):(5*x)]
+for(i in 1:5){
+  Debt[i] <- convert(Debt[i])
+}
+Debt <- as.numeric(Debt)
+DebtToEquity = Debt/Equity
+x<-1
+while (cash_names[x] != "Free Cash Flow") {x<-x+1}
+Free_Cash_Flow <- cash_nums[(5*(x-1)+1):(5*x)]
+for(i in 1:5){
+  Free_Cash_Flow[i] <- convert(Free_Cash_Flow[i])
+}
+Free_Cash_Flow <- as.numeric(Free_Cash_Flow)
+
+
+
 ```
 
 
@@ -63,6 +101,6 @@ for(i in 1:5){
 ## Plots
 
 ```{r pressure, echo=FALSE}
-plot(Revenue)
+plot(DebtToEquity)
 ```
 
