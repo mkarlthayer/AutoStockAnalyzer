@@ -1,10 +1,8 @@
 ---
-title: "AutoStockAnalyzer"
 output:
   pdf_document: default
   html_document: default
   word_document: default
-date: "2023-08-31"
 ---
 
 ```{r setup, include=FALSE}
@@ -70,7 +68,7 @@ for(i in 1:5){
 }
 x<-1
 while (balance_names[x] != "Total Equity") {x<-x+1}
-Equity <- balance_nums[(5*(x-1)+1):(5*x)]
+  Equity <- balance_nums[(5*(x-1)+1):(5*x)]
 for(i in 1:5){
   Equity[i] <- convert(Equity[i])
 }
@@ -90,7 +88,18 @@ for(i in 1:5){
   Free_Cash_Flow[i] <- convert(Free_Cash_Flow[i])
 }
 Free_Cash_Flow <- as.numeric(Free_Cash_Flow)
+x<-1
 
+#Valuation data
+while (income_names[x] != "EPS (Basic)") {x<-x+1}
+EPS <- income_nums[(5*x)]
+EPS <- as.double(EPS)
+x<-1
+while (stats_names[x] != "P/E") {x<-x+1}
+PE <- stats_nums[x] %>% as.double()
+x<-1
+while (stats_names[x] != "Price") {x<-x+1}
+price <- stats_nums[x] %>% as.double()
 
 
 ```
@@ -101,6 +110,33 @@ Free_Cash_Flow <- as.numeric(Free_Cash_Flow)
 ## Plots
 
 ```{r pressure, echo=FALSE}
-plot(DebtToEquity)
+#plot(DebtToEquity)
 ```
 
+```{r, echo=FALSE}
+df <- data.frame (
+  year = 1:5,
+  Revenue = Revenue,
+  DebtToEquity = DebtToEquity
+)
+ggplot(df, aes(Revenue, year)) +
+      geom_bar(stat="identity", fill = 'blue', color = "black", alpha = 0.8) +
+      geom_text(aes(label=Revenue), vjust = -0.3) +
+      ylab("ylabel")
+```
+
+```{r, echo=FALSE}
+ggplot(df, aes(year, DebtToEquity)) +
+  geom_line(col="red") + geom_point(size=3, col="red") +
+  #geom_text(label=round(DebtToEquity,2)) +
+  geom_hline(yintercept = 1) +
+  annotate("text", x=2, y=1.01, label='"Good" Debt to Equity') +
+  theme_bw()
+```
+```{r echo=FALSE}
+r = 0.08
+buyprice1 = EPS*(1+r)*PE
+```
+
+Current Price: `r price`  
+Estimated Buy Price: `r buyprice1`
