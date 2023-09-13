@@ -60,12 +60,14 @@ cash_nums <- cash_flow_page %>% html_nodes(".cell__content span") %>% html_text(
 stats_names <- more_stats_page %>% html_nodes(".snapshot-td2-cp") %>% html_text()
 stats_nums <- more_stats_page %>% html_nodes(".snapshot-td2 b") %>% html_text()
 
+#Yearly Data 
 x<-1
 while (income_names[x] != "Sales/Revenue") {x<-x+1}
 Revenue <- income_nums[(5*(x-1)+1):(5*x)]
 for(i in 1:5){
   Revenue[i] <- convert(Revenue[i])
 }
+
 x<-1
 while (balance_names[x] != "Total Equity") {x<-x+1}
   Equity <- balance_nums[(5*(x-1)+1):(5*x)]
@@ -73,6 +75,7 @@ for(i in 1:5){
   Equity[i] <- convert(Equity[i])
 }
 Equity <- as.numeric(Equity)
+
 x<-1
 while (balance_names[x] != "Long-Term Debt") {x<-x+1}
 Debt <- balance_nums[(5*(x-1)+1):(5*x)]
@@ -81,6 +84,7 @@ for(i in 1:5){
 }
 Debt <- as.numeric(Debt)
 DebtToEquity = Debt/Equity
+
 x<-1
 while (cash_names[x] != "Free Cash Flow") {x<-x+1}
 Free_Cash_Flow <- cash_nums[(5*(x-1)+1):(5*x)]
@@ -88,19 +92,38 @@ for(i in 1:5){
   Free_Cash_Flow[i] <- convert(Free_Cash_Flow[i])
 }
 Free_Cash_Flow <- as.numeric(Free_Cash_Flow)
-x<-1
+
 
 #Valuation data
+x<-1
 while (income_names[x] != "EPS (Basic)") {x<-x+1}
 EPS <- income_nums[(5*x)]
 EPS <- as.double(EPS)
+
 x<-1
 while (stats_names[x] != "P/E") {x<-x+1}
 PE <- stats_nums[x] %>% as.double()
+
 x<-1
 while (stats_names[x] != "Price") {x<-x+1}
 price <- stats_nums[x] %>% as.double()
 
+x<-1
+while (stats_names[x] != "Dividend") {x<-x+1}
+Dividend <- stats_nums[x] %>% as.double()
+
+x<-1
+while (stats_names[x] != "Dividend %") {x<-x+1}
+Dividend_Percent <- stats_nums[x]
+Dividend_Percent <- as.numeric(sub("%", "", Dividend_Percent))/100
+
+x<-1
+while (stats_names[x] != "Beta") {x<-x+1}
+Beta <- stats_nums[x] %>% as.double()
+
+x<-1
+while (stats_names[x] != "PEG") {x<-x+1}
+PEG <- stats_nums[x] %>% as.double()
 
 ```
 
