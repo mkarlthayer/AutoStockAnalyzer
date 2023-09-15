@@ -82,8 +82,32 @@ Debt <- balance_nums[(5*(x-1)+1):(5*x)]
 for(i in 1:5){
   Debt[i] <- convert(Debt[i])
 }
-Debt <- as.numeric(Debt)
-DebtToEquity = Debt/Equity
+Long_Debt <- as.numeric(Debt)
+DebtToEquity = Long_Debt/Equity
+
+x<-1
+while (balance_names[x] != "Short Term Debt") {x<-x+1}
+Debt <- balance_nums[(5*(x-1)+1):(5*x)]
+for(i in 1:5){
+  Debt[i] <- convert(Debt[i])
+}
+Short_Debt <- as.numeric(Debt)
+
+x<-1
+while (balance_names[x] != "Total Assets") {x<-x+1}
+  Assets <- balance_nums[(5*(x-1)+1):(5*x)]
+for(i in 1:5){
+  Assets[i] <- convert(Assets[i])
+}
+Assets <- as.numeric(Assets)
+
+x<-1
+while (balance_names[x] != "Total Liabilities") {x<-x+1}
+  Liabilities <- balance_nums[(5*(x-1)+1):(5*x)]
+for(i in 1:5){
+  Liabilities[i] <- convert(Liabilities[i])
+}
+Liabilities <- as.numeric(Liabilities)
 
 x<-1
 while (cash_names[x] != "Free Cash Flow") {x<-x+1}
@@ -124,6 +148,46 @@ Beta <- stats_nums[x] %>% as.double()
 x<-1
 while (stats_names[x] != "PEG") {x<-x+1}
 PEG <- stats_nums[x] %>% as.double()
+
+x<-1
+while (stats_names[x] != "Market Cap" ) {x<-x+1}
+market_cap <- as.numeric(gsub("[^0-9.]", "", stats_nums[x]))
+if (grepl("B", stats_nums[x])) {
+  market_cap <- market_cap * 1e9  # 1 billion
+}
+
+
+```
+
+```{r}
+stats_names
+Assets[]
+```
+
+## Intrinsic Value Functions
+
+```{r}
+# Discounted Cash Flow Analysis
+market_debt <- function(short, long) {
+  mean(tail(short, 2)) + mean(tail(long, 2))
+}
+
+
+dcf_analysis <- function(cash_flow) {
+  
+}
+
+fm_analysis <- function(PE, PEG, EPS)
+  EPS * (1 + PEG) * PE
+
+intrinsic_value <- fm_analysis(PE, PEG, EPS)
+
+
+asset_based <- function(assets, liabilities) {
+  tail(Assets, 1) - tail(Liabilities, 1)
+}
+
+intrinsic_value <- asset_based(Assets, Liabilities)
 
 ```
 
