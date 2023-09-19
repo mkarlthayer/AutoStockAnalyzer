@@ -22,13 +22,13 @@ stock = "CVS"
 
 ```{r echo=FALSE}
 # Custom Functions
+# converts values to millions of $
 convert <- function(x) {
   x <- gsub('[(]',"-",x)
   x <- gsub('[)]',"",x)
   if (grepl("B", x)) {
     x <- gsub('[B]',"",x) 
-    x <- as.double(x)
-    x*1000
+    x <- as.double(x)*1e3
   } else if (grepl("M", x)) {
     x <- gsub('[M]',"",x)
     x <- as.double(x) 
@@ -67,6 +67,7 @@ Revenue <- income_nums[(5*(x-1)+1):(5*x)]
 for(i in 1:5){
   Revenue[i] <- convert(Revenue[i])
 }
+Revenue <- as.numeric(Revenue)
 
 x<-1
 while (balance_names[x] != "Total Equity") {x<-x+1}
@@ -151,22 +152,28 @@ PEG <- stats_nums[x] %>% as.double()
 
 x<-1
 while (stats_names[x] != "Market Cap" ) {x<-x+1}
-market_cap <- as.numeric(gsub("[^0-9.]", "", stats_nums[x]))
-if (grepl("B", stats_nums[x])) {
-  market_cap <- market_cap * 1e9  # 1 billion
-}
+market_cap <- convert(stats_nums[x])
 
+#market_cap <- as.numeric(gsub("[^0-9.]", "", stats_nums[x]))
+#if (grepl("B", stats_nums[x])) {
+#  market_cap <- market_cap * 1e9  # 1 billion
+#}
 
+x<-1
+while (stats_names[x] != "Shs Outstand" ) {x<-x+1}
+shsOutstanding <- convert(stats_nums[x])
 ```
 
-```{r}
-stats_names
-Assets[]
+```{r echo=FALSE}
+#stats_names
+#Assets[]
 ```
 
+
+```{r echo=FALSE}
 ## Intrinsic Value Functions
 
-```{r}
+
 # Discounted Cash Flow Analysis
 market_debt <- function(short, long) {
   mean(tail(short, 2)) + mean(tail(long, 2))
@@ -177,53 +184,74 @@ dcf_analysis <- function(cash_flow) {
   
 }
 
-fm_analysis <- function(PE, PEG, EPS)
-  EPS * (1 + PEG) * PE
+
+fm_analysis <- function(PE, PEG, EPS) {
+  r = (PE/PEG)/100
+  EPS * (1 + r) * PE
+}
 
 intrinsic_value <- fm_analysis(PE, PEG, EPS)
 
 
-asset_based <- function(assets, liabilities) {
-  tail(Assets, 1) - tail(Liabilities, 1)
+asset_based <- function(assets, liabilities, shsOutstanding) {
+  (tail(Assets, 1) - tail(Liabilities, 1))/shsOutstanding
 }
 
-intrinsic_value <- asset_based(Assets, Liabilities)
+intrinsic_value <- asset_based(Assets, Liabilities, shsOutstanding)
 
 ```
 
 
-## Stock Analysis of `r stock`
+# Stock Analysis of `r stock`
 
 ## Plots
 
-```{r pressure, echo=FALSE}
-#plot(DebtToEquity)
-```
-
+### Revenue Plot  
 ```{r, echo=FALSE}
 df <- data.frame (
   year = 1:5,
   Revenue = Revenue,
-  DebtToEquity = DebtToEquity
+  DebtToEquity = DebtToEquity,
+  Free_Cash_Flow = Free_Cash_Flow
 )
-ggplot(df, aes(Revenue, year)) +
-      geom_bar(stat="identity", fill = 'blue', color = "black", alpha = 0.8) +
-      geom_text(aes(label=Revenue), vjust = -0.3) +
-      ylab("ylabel")
-```
-
-```{r, echo=FALSE}
-ggplot(df, aes(year, DebtToEquity)) +
-  geom_line(col="red") + geom_point(size=3, col="red") +
-  #geom_text(label=round(DebtToEquity,2)) +
-  geom_hline(yintercept = 1) +
-  annotate("text", x=2, y=1.01, label='"Good" Debt to Equity') +
-  theme_bw()
 ```
 ```{r echo=FALSE}
-r = 0.08
-buyprice1 = EPS*(1+r)*PE
+graph <- function(data,col,ylabel) {
+    ggplot(df, aes(year,data)) +
+      geom_bar(stat="identity", width = 0.8, fill = col, color = "black", alpha = 0.8) +
+      #geom_smooth(method=lm, se=FALSE, size=2) +
+      geom_text(aes(label=data), vjust = -0.3) +
+      ylab(ylabel) +
+      theme_bw()
+}
+
+graph(Revenue, "blue","Revenue in Millions of $")
+
 ```
 
-Current Price: `r price`  
-Estimated Buy Price: `r buyprice1`
+
+### Free Cash Flow Plot  
+
+```{r echo=FALSE}
+graph(Free_Cash_Flow, "green","Free Cash Flow in Millions of $")
+```
+
+### Debt-to-Equity Ratio Plot  
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+ggplot(df, aes(year, DebtToEquity)) +
+  geom_smooth(col = "#B80F0A") +
+  #geom_line(col="#B80F0A", size = 2) +
+  geom_point(size=4, col="#B80F0A") +
+  geom_text(label=round(DebtToEquity,2), y=DebtToEquity+.07) +
+  geom_hline(yintercept = 1) +
+  annotate("text", x=2, y=1.05, label='"Good" Debt to Equity') +
+  ylim(0,max(1.5,DebtToEquity)) +
+  theme_bw()
+```
+
+## Price Valuations
+
+**Current Price:** `r price`  
+**Financial Metric Valuation:** `r round(fm_analysis(PE, PEG, EPS),2)`  
+**Asset Based Valuation:** `r round(asset_based(Assets, Liabilities, shsOutstanding),2)`
+
