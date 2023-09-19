@@ -204,6 +204,13 @@ intrinsic_value <- asset_based(Assets, Liabilities, shsOutstanding)
 
 # Stock Analysis of `r stock`
 
+## Price Valuations
+
+**Current Price:** `r price`  
+**Financial Metric Valuation:** `r round(fm_analysis(PE, PEG, EPS),2)`  
+**Asset Based Valuation:** `r round(asset_based(Assets, Liabilities, shsOutstanding),2)`
+
+
 ## Plots
 
 ### Revenue Plot  
@@ -249,9 +256,5 @@ ggplot(df, aes(year, DebtToEquity)) +
   theme_bw()
 ```
 
-## Price Valuations
 
-**Current Price:** `r price`  
-**Financial Metric Valuation:** `r round(fm_analysis(PE, PEG, EPS),2)`  
-**Asset Based Valuation:** `r round(asset_based(Assets, Liabilities, shsOutstanding),2)`
 
