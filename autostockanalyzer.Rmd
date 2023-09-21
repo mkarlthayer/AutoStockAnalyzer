@@ -219,7 +219,9 @@ df <- data.frame (
   year = 1:5,
   Revenue = Revenue,
   DebtToEquity = DebtToEquity,
-  Free_Cash_Flow = Free_Cash_Flow
+  Free_Cash_Flow = Free_Cash_Flow,
+  Equity = Equity,
+  Debt = Long_Debt
 )
 ```
 ```{r echo=FALSE}
@@ -232,7 +234,7 @@ graph <- function(data,col,ylabel) {
       theme_bw()
 }
 
-graph(Revenue, "blue","Revenue in Millions of $")
+graph(Revenue, "forestgreen","Revenue in Millions of $")
 
 ```
 
@@ -240,10 +242,29 @@ graph(Revenue, "blue","Revenue in Millions of $")
 ### Free Cash Flow Plot  
 
 ```{r echo=FALSE}
-graph(Free_Cash_Flow, "green","Free Cash Flow in Millions of $")
+graph(Free_Cash_Flow, "purple","Free Cash Flow in Millions of $")
+```
+
+### Debt vs Equity plot    
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+ggplot(df, aes(x = year, y = Equity)) +
+  geom_col(aes(fill = "Equity"), 
+           color = "black",
+           width = 0.45,
+           position = position_nudge(x = -0.225)) +
+  geom_col(aes(y = Debt, fill = "Debt"), 
+           color = "black",
+           width = 0.45,
+           position = position_nudge(x = 0.225)) +
+  scale_fill_manual(values = alpha(c("red", "blue"), .8)) +
+  ylab("Equity vs Debt (in Millions of $)") +
+  theme_bw()
+
 ```
 
 ### Debt-to-Equity Ratio Plot  
+
 ```{r, echo=FALSE, warning=FALSE, message=FALSE}
 ggplot(df, aes(year, DebtToEquity)) +
   geom_smooth(col = "#B80F0A") +
