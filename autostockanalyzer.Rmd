@@ -9,15 +9,16 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r echo=FALSE}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 # load library
 library(rvest)
 library(ggplot2)
 library(FinCal)
+library(dplyr)
 ```
 
 ```{r echo=FALSE}
-stock = "CVS"
+stock = "KO"
 ```
 
 ```{r echo=FALSE}
@@ -50,6 +51,8 @@ cash_flow <- paste0('https://www.marketwatch.com/investing/stock/',stock,'/finan
 cash_flow_page <- cash_flow %>% read_html()
 more_stats <- paste0("https://finviz.com/quote.ashx?t=",stock)
 more_stats_page <- more_stats %>% read_html()
+sp500_page <- "https://www.multpl.com/s-p-500-pe-ratio" %>% read_html()
+
 
 income_names <- income_statement_page %>% html_nodes(".overflow__cell .fixed--cell") %>% html_text()
 income_nums <- income_statement_page %>% html_nodes(".cell__content span") %>% html_text()
@@ -59,6 +62,7 @@ cash_names <- cash_flow_page %>% html_nodes(".overflow__cell .fixed--cell") %>% 
 cash_nums <- cash_flow_page %>% html_nodes(".cell__content span") %>% html_text()
 stats_names <- more_stats_page %>% html_nodes(".snapshot-td2-cp") %>% html_text()
 stats_nums <- more_stats_page %>% html_nodes(".snapshot-td2 b") %>% html_text()
+sp500_num <- sp500_page %>% html_nodes("#current") %>% html_text()
 
 #Yearly Data 
 x<-1
@@ -165,28 +169,36 @@ shsOutstanding <- convert(stats_nums[x])
 ```
 
 ```{r echo=FALSE}
-#stats_names
-#Assets[]
+library(stringr)
+sp500PE <- str_extract(sp500_num, "(\\d\\d)\\.(\\d\\d)") %>% as.double()
 ```
 
 
 ```{r echo=FALSE}
 ## Intrinsic Value Functions
 
+r = (PE/PEG)/100
 
-# Discounted Cash Flow Analysis
 market_debt <- function(short, long) {
   mean(tail(short, 2)) + mean(tail(long, 2))
 }
 
 
-dcf_analysis <- function(cash_flow) {
-  
+dcf_analysis <- function(Free_Cash_Flow, shsOutstanding) {
+  a <- Free_Cash_Flow[5]
+  for (i in 1:8) {
+    a[i+1] <- (a[i]+a[i]*r)
+  }
+  dcf <- sum(a)-a[1]
+  return(dcf/shsOutstanding)
+}
+
+dividend_analysis <- function(Dividend, r) {
+  Dividend/(0.08 - r)
 }
 
 
-fm_analysis <- function(PE, PEG, EPS) {
-  r = (PE/PEG)/100
+fm_analysis <- function(PE, r, EPS) {
   EPS * (1 + r) * PE
 }
 
@@ -194,11 +206,8 @@ intrinsic_value <- fm_analysis(PE, PEG, EPS)
 
 
 asset_based <- function(assets, liabilities, shsOutstanding) {
-  (tail(Assets, 1) - tail(Liabilities, 1))/shsOutstanding
+  (tail(assets, 1) - tail(liabilities, 1))/shsOutstanding
 }
-
-intrinsic_value <- asset_based(Assets, Liabilities, shsOutstanding)
-
 ```
 
 
@@ -208,8 +217,23 @@ intrinsic_value <- asset_based(Assets, Liabilities, shsOutstanding)
 
 **Current Price:** `r price`  
 **Financial Metric Valuation:** `r round(fm_analysis(PE, PEG, EPS),2)`  
-**Asset Based Valuation:** `r round(asset_based(Assets, Liabilities, shsOutstanding),2)`
+**Asset Based Valuation:** `r round(asset_based(Assets, Liabilities, shsOutstanding),2)`  
+**DCF Valuation**: `r round(dcf_analysis(Free_Cash_Flow, shsOutstanding),2)`
 
+## Important Numbers 
+
+```{r echo = FALSE}
+BetaValue = ifelse(Beta > 1, "more volatile", "less volatile")
+PEValue = ifelse(PE > sp500PE, "more pricy", "less pricy")
+```
+
+**Beta:** `r Beta`  
+**S&P500 Average Beta:** 1  
+**Note:** `r stock` is `r BetaValue` than the S&P500 
+
+**P/E:** `r PE`  
+**S&P500 Average PE:** `r sp500PE`  
+**Note:** `r stock` is `r PEValue` than the S&P500
 
 ## Plots
 
@@ -237,13 +261,15 @@ graph <- function(data,col,ylabel) {
 graph(Revenue, "forestgreen","Revenue in Millions of $")
 
 ```
-
+Revenue is how much a company makes from selling goods/services. Provides insight into how much a company is growing. A good sign is if revenue is positive and grows every year.
 
 ### Free Cash Flow Plot  
 
 ```{r echo=FALSE}
 graph(Free_Cash_Flow, "purple","Free Cash Flow in Millions of $")
 ```
+Free Cash Flow is how much cash a company has at its disposal. A positive and growing amount of free cash flow is a great sign for a company
+
 
 ### Debt vs Equity plot    
 
@@ -253,15 +279,16 @@ ggplot(df, aes(x = year, y = Equity)) +
            color = "black",
            width = 0.45,
            position = position_nudge(x = -0.225)) +
-  geom_col(aes(y = Debt, fill = "Debt"), 
+  geom_col(aes(y = Long_Debt, fill = "Long Term Debt"), 
            color = "black",
            width = 0.45,
            position = position_nudge(x = 0.225)) +
-  scale_fill_manual(values = alpha(c("red", "blue"), .8)) +
-  ylab("Equity vs Debt (in Millions of $)") +
+  scale_fill_manual(values = alpha(c("blue", "red"), .8)) +
+  ylab("Equity vs Long Term Debt (in Millions of $)") +
   theme_bw()
 
 ```
+Shareholder equity represents the net worth of a company while the long-term debt represents how much a company owes beyond one year. This graph shows the scale between how much a company is worth vs how much they owe in debt. 
 
 ### Debt-to-Equity Ratio Plot  
 
@@ -276,6 +303,6 @@ ggplot(df, aes(year, DebtToEquity)) +
   ylim(0,max(1.5,DebtToEquity)) +
   theme_bw()
 ```
-
+Debt-to-Equity is calculated by dividing a company's long-term debt by its shareholders' equity. Represents  a company's reliance on debt to fund their operations
 
 
