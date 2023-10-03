@@ -242,6 +242,8 @@ financial_health_grade <- case_when(
 
 # Stock Analysis of `r stock`
 
+## Financial Health Grade: `r financial_health_grade`
+
 ## Price Valuations
 
 **Current Price:** `r price`  
@@ -263,8 +265,6 @@ PEValue = ifelse(PE > sp500PE, "more pricy", "less pricy")
 **P/E:** `r PE`  
 **S&P500 Average PE:** `r sp500PE`  
 **Note:** `r stock` is `r PEValue` than the S&P500
-
-Financial Health Grade: `r financial_health_grade`
 
 ## Plots
 
