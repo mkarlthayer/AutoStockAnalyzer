@@ -32,12 +32,49 @@ convert <- function(x) {
     x <- as.double(x)*1e3
   } else if (grepl("M", x)) {
     x <- gsub('[M]',"",x)
-    x <- as.double(x) 
-    x*1
+    x <- as.double(x)*1
   } else if (grepl("-", x)) {
     x <- gsub('-',"0",x)
     x <- as.double(x)
   }
+}
+
+getIncomeData <- function(name) {
+  x <- 1
+  while (income_names[x] != name) {x<-x+1}
+    values <- income_nums[(5*(x-1)+1):(5*x)]
+  for(i in 1:5){
+    values[i] <- convert(values[i])
+  }
+  values <- as.numeric(values)
+  return(values)
+}
+getBalanceData <- function(name) {
+  x <- 1
+  while (balance_names[x] != name) {x<-x+1}
+    values <- balance_nums[(5*(x-1)+1):(5*x)]
+  for(i in 1:5){
+    values[i] <- convert(values[i])
+  }
+  values <- as.numeric(values)
+  return(values)
+}
+getCashData <- function(name) {
+  x <- 1
+  while (cash_names[x] != name) {x<-x+1}
+    values <- cash_nums[(5*(x-1)+1):(5*x)]
+  for(i in 1:5){
+    values[i] <- convert(values[i])
+  }
+  values <- as.numeric(values)
+  return(values)
+}
+
+getStatsData <- function(name) {
+  x<-1
+  while (stats_names[x] != name) {x<-x+1}
+  value <- stats_nums[x] %>% as.double()
+  return(value)
 }
 ```
 
@@ -65,63 +102,31 @@ stats_nums <- more_stats_page %>% html_nodes(".snapshot-td2 b") %>% html_text()
 sp500_num <- sp500_page %>% html_nodes("#current") %>% html_text()
 
 #Yearly Data 
-x<-1
-while (income_names[x] != "Sales/Revenue") {x<-x+1}
-Revenue <- income_nums[(5*(x-1)+1):(5*x)]
-for(i in 1:5){
-  Revenue[i] <- convert(Revenue[i])
-}
-Revenue <- as.numeric(Revenue)
+Revenue <- getIncomeData("Sales/Revenue")
 
-x<-1
-while (balance_names[x] != "Total Equity") {x<-x+1}
-  Equity <- balance_nums[(5*(x-1)+1):(5*x)]
-for(i in 1:5){
-  Equity[i] <- convert(Equity[i])
-}
-Equity <- as.numeric(Equity)
+Equity <- getBalanceData("Total Equity")
 
-x<-1
-while (balance_names[x] != "Long-Term Debt") {x<-x+1}
-Debt <- balance_nums[(5*(x-1)+1):(5*x)]
-for(i in 1:5){
-  Debt[i] <- convert(Debt[i])
-}
-Long_Debt <- as.numeric(Debt)
-DebtToEquity = Long_Debt/Equity
+Long_Debt <- getBalanceData("Long-Term Debt")
 
-x<-1
-while (balance_names[x] != "Short Term Debt") {x<-x+1}
-Debt <- balance_nums[(5*(x-1)+1):(5*x)]
-for(i in 1:5){
-  Debt[i] <- convert(Debt[i])
-}
-Short_Debt <- as.numeric(Debt)
+DebtToEquity <- Long_Debt/Equity
 
-x<-1
-while (balance_names[x] != "Total Assets") {x<-x+1}
-  Assets <- balance_nums[(5*(x-1)+1):(5*x)]
-for(i in 1:5){
-  Assets[i] <- convert(Assets[i])
-}
-Assets <- as.numeric(Assets)
+Short_Debt <- getBalanceData("Short Term Debt")
 
-x<-1
-while (balance_names[x] != "Total Liabilities") {x<-x+1}
-  Liabilities <- balance_nums[(5*(x-1)+1):(5*x)]
-for(i in 1:5){
-  Liabilities[i] <- convert(Liabilities[i])
-}
-Liabilities <- as.numeric(Liabilities)
+Assets <- getBalanceData("Total Assets")
 
-x<-1
-while (cash_names[x] != "Free Cash Flow") {x<-x+1}
-Free_Cash_Flow <- cash_nums[(5*(x-1)+1):(5*x)]
-for(i in 1:5){
-  Free_Cash_Flow[i] <- convert(Free_Cash_Flow[i])
-}
-Free_Cash_Flow <- as.numeric(Free_Cash_Flow)
+Liabilities <- getBalanceData("Total Liabilities")
 
+CurrentLiabilities <- getBalanceData("Total Current Liabilities")
+
+cash <- getBalanceData("Cash & Short Term Investments")
+
+accountsReceivable <- getBalanceData("Total Accounts Receivable")
+
+Free_Cash_Flow <- getCashData("Free Cash Flow")
+
+NetIncome <- getCashData("Net Income before Extraordinaries")
+
+OperatingMargin <- NetIncome/Revenue
 
 #Valuation data
 x<-1
@@ -129,49 +134,40 @@ while (income_names[x] != "EPS (Basic)") {x<-x+1}
 EPS <- income_nums[(5*x)]
 EPS <- as.double(EPS)
 
-x<-1
-while (stats_names[x] != "P/E") {x<-x+1}
-PE <- stats_nums[x] %>% as.double()
+
+PE <- getStatsData("P/E")
+
+price <- getStatsData("Price")
+
+Dividend <- getStatsData("Dividend")
+
+Beta <- getStatsData("Beta")
+
+PEG <- getStatsData("PEG")
 
 x<-1
-while (stats_names[x] != "Price") {x<-x+1}
-price <- stats_nums[x] %>% as.double()
+while (stats_names[x] != "Shs Outstand" ) {x<-x+1}
+shsOutstanding <- convert(stats_nums[x])
 
 x<-1
-while (stats_names[x] != "Dividend") {x<-x+1}
-Dividend <- stats_nums[x] %>% as.double()
+while (stats_names[x] != "Market Cap" ) {x<-x+1}
+market_cap <- convert(stats_nums[x])
 
 x<-1
 while (stats_names[x] != "Dividend %") {x<-x+1}
 Dividend_Percent <- stats_nums[x]
 Dividend_Percent <- as.numeric(sub("%", "", Dividend_Percent))/100
 
-x<-1
-while (stats_names[x] != "Beta") {x<-x+1}
-Beta <- stats_nums[x] %>% as.double()
 
-x<-1
-while (stats_names[x] != "PEG") {x<-x+1}
-PEG <- stats_nums[x] %>% as.double()
-
-x<-1
-while (stats_names[x] != "Market Cap" ) {x<-x+1}
-market_cap <- convert(stats_nums[x])
-
-#market_cap <- as.numeric(gsub("[^0-9.]", "", stats_nums[x]))
-#if (grepl("B", stats_nums[x])) {
-#  market_cap <- market_cap * 1e9  # 1 billion
-#}
-
-x<-1
-while (stats_names[x] != "Shs Outstand" ) {x<-x+1}
-shsOutstanding <- convert(stats_nums[x])
 ```
 
 ```{r echo=FALSE}
 library(stringr)
 sp500PE <- str_extract(sp500_num, "(\\d\\d)\\.(\\d\\d)") %>% as.double()
 ```
+
+
+
 
 
 ```{r echo=FALSE}
@@ -202,21 +198,54 @@ fm_analysis <- function(PE, r, EPS) {
   EPS * (1 + r) * PE
 }
 
-intrinsic_value <- fm_analysis(PE, PEG, EPS)
+intrinsic_value <- fm_analysis(PE, r, EPS)
 
 
 asset_based <- function(assets, liabilities, shsOutstanding) {
   (tail(assets, 1) - tail(liabilities, 1))/shsOutstanding
 }
 ```
+```{r, echo=FALSE}
+df <- data.frame (
+  year = 1:5,
+  Revenue = Revenue,
+  DebtToEquity = DebtToEquity,
+  Free_Cash_Flow = Free_Cash_Flow,
+  Equity = Equity,
+  Debt = Long_Debt,
+  OperatingMargin = OperatingMargin
+)
+```
+```{r echo=FALSE}
+score <- 0
 
+delm <- lm(DebtToEquity ~ year, df)
+if(coef(delm)[2] < 0) {score = score + 1}
+
+rlm <- lm(Revenue ~ year, df)
+if(coef(rlm)[2] > 0) {score = score + 1}
+
+omlm <- lm(OperatingMargin ~ year, df)
+if(coef(rlm)[2] > 0) {score = score + 1}
+
+quick <- quick.ratio(cash[5],0,accountsReceivable[5],CurrentLiabilities[5])
+if(quick > 1) {score = score + 1}
+
+financial_health_grade <- case_when(
+  score == 0 ~ "F",
+  score == 1 ~ "D",
+  score == 2 ~ "C",
+  score == 3 ~ "B",
+  score == 4 ~ "A"
+)
+```
 
 # Stock Analysis of `r stock`
 
 ## Price Valuations
 
 **Current Price:** `r price`  
-**Financial Metric Valuation:** `r round(fm_analysis(PE, PEG, EPS),2)`  
+**Financial Metric Valuation:** `r round(fm_analysis(PE, r, EPS),2)`  
 **Asset Based Valuation:** `r round(asset_based(Assets, Liabilities, shsOutstanding),2)`  
 **DCF Valuation**: `r round(dcf_analysis(Free_Cash_Flow, shsOutstanding),2)`
 
@@ -235,19 +264,12 @@ PEValue = ifelse(PE > sp500PE, "more pricy", "less pricy")
 **S&P500 Average PE:** `r sp500PE`  
 **Note:** `r stock` is `r PEValue` than the S&P500
 
+Financial Health Grade: `r financial_health_grade`
+
 ## Plots
 
 ### Revenue Plot  
-```{r, echo=FALSE}
-df <- data.frame (
-  year = 1:5,
-  Revenue = Revenue,
-  DebtToEquity = DebtToEquity,
-  Free_Cash_Flow = Free_Cash_Flow,
-  Equity = Equity,
-  Debt = Long_Debt
-)
-```
+
 ```{r echo=FALSE}
 graph <- function(data,col,ylabel) {
     ggplot(df, aes(year,data)) +
